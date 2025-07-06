@@ -4,7 +4,7 @@ import { Suspense } from "react"
 import { Canvas } from "@react-three/fiber"
 import { Physics } from "@react-three/rapier"
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
-import FixedGameScene from "@/components/game/FixedGameScene"
+import ImprovedGameScene from "@/components/game/ImprovedGameScene"
 import GameUI from "@/components/game/GameUI"
 import { GameProvider } from "@/components/game/GameContext"
 import LoadingScreen from "@/components/game/LoadingScreen"
@@ -62,8 +62,8 @@ export default function GamePage() {
               dampingFactor={0.05}
             />
 
-            <Physics gravity={[0, -9.81, 0]} timeStep={1 / 60}>
-              <FixedGameScene />
+            <Physics gravity={[0, -9.81, 0]} timeStep={1 / 60} debug={false}>
+              <ImprovedGameScene />
             </Physics>
           </Canvas>
         </Suspense>
