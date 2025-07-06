@@ -24,12 +24,14 @@ export default function GamePage() {
             }}
             dpr={[1, 2]}
           >
+            {/* Camera */}
             <PerspectiveCamera makeDefault position={[0, 8, 12]} fov={60} near={0.1} far={1000} />
 
+            {/* Controls */}
             <OrbitControls
               enablePan={false}
-              enableZoom={true}
-              enableRotate={true}
+              enableZoom
+              enableRotate
               minDistance={8}
               maxDistance={20}
               minPolarAngle={Math.PI / 6}
@@ -37,16 +39,18 @@ export default function GamePage() {
               target={[0, 0, 0]}
             />
 
-            <Physics debug={false} gravity={[0, -9.81, 0]}>
+            {/* Physics & game scene */}
+            <Physics gravity={[0, -9.81, 0]}>
               <GameScene />
             </Physics>
 
+            {/* HDRI / environment */}
             <Environment preset="warehouse" />
 
-            {/* Enable the NormalPass so SSAO has access to normals */}
-            <EffectComposer disableNormalPass={false}>
-              <Bloom intensity={0.5} luminanceThreshold={0.9} />
+            {/* Post-processing – turn on the internal normal pass */}
+            <EffectComposer enableNormalPass>
               <SSAO intensity={0.5} radius={0.1} />
+              <Bloom intensity={0.5} luminanceThreshold={0.9} />
             </EffectComposer>
           </Canvas>
         </Suspense>
