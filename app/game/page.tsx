@@ -44,7 +44,7 @@ export default function GamePage() {
             <Environment preset="warehouse" />
 
             {/* Enable the NormalPass so SSAO has access to normals */}
-            <EffectComposer normalPass>
+            <EffectComposer disableNormalPass={false}>
               <Bloom intensity={0.5} luminanceThreshold={0.9} />
               <SSAO intensity={0.5} radius={0.1} />
             </EffectComposer>
