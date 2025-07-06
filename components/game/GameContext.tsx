@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { createContext, useContext, useReducer, type ReactNode } from "react"
 
 interface GameState {
@@ -17,6 +16,12 @@ interface GameState {
     soundEnabled: boolean
     maxScore: number
   }
+  lastPointWinner: "player" | "ai" | null
+  gameStats: {
+    rallies: number
+    longestRally: number
+    currentRally: number
+  }
 }
 
 type GameAction =
@@ -30,19 +35,27 @@ type GameAction =
   | { type: "UPDATE_AI_PADDLE"; position: [number, number, number] }
   | { type: "CHANGE_SERVER"; server: "player" | "ai" }
   | { type: "UPDATE_SETTINGS"; settings: Partial<GameState["gameSettings"]> }
+  | { type: "INCREMENT_RALLY" }
+  | { type: "RESET_RALLY" }
 
 const initialState: GameState = {
   playerScore: 0,
   aiScore: 0,
-  gameStatus: "menu",
+  gameStatus: "playing", // Auto-start the game
   currentServer: "player",
-  ballPosition: [0, 2, 0],
-  playerPaddlePosition: [0, 1, 6],
-  aiPaddlePosition: [0, 1, -6],
+  ballPosition: [0, 2.5, 0],
+  playerPaddlePosition: [0, 1.8, 1.6],
+  aiPaddlePosition: [0, 1.8, -1.6],
   gameSettings: {
     difficulty: "medium",
     soundEnabled: true,
     maxScore: 11,
+  },
+  lastPointWinner: null,
+  gameStats: {
+    rallies: 0,
+    longestRally: 0,
+    currentRally: 0,
   },
 }
 
@@ -53,12 +66,30 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const newAiScore = action.player === "ai" ? state.aiScore + 1 : state.aiScore
       const gameOver = newPlayerScore >= state.gameSettings.maxScore || newAiScore >= state.gameSettings.maxScore
 
+      // Determine next server (alternates every 2 points, or every point after 10-10)
+      let nextServer: "player" | "ai"
+      const totalPoints = newPlayerScore + newAiScore
+      if (newPlayerScore >= 10 && newAiScore >= 10) {
+        // Deuce - alternate every point
+        nextServer = totalPoints % 2 === 0 ? "player" : "ai"
+      } else {
+        // Normal game - alternate every 2 points
+        nextServer = Math.floor(totalPoints / 2) % 2 === 0 ? "player" : "ai"
+      }
+
       return {
         ...state,
         playerScore: newPlayerScore,
         aiScore: newAiScore,
         gameStatus: gameOver ? "gameOver" : "playing",
-        currentServer: action.player === "player" ? "ai" : "player",
+        currentServer: nextServer,
+        lastPointWinner: action.player,
+        gameStats: {
+          ...state.gameStats,
+          rallies: state.gameStats.rallies + 1,
+          longestRally: Math.max(state.gameStats.longestRally, state.gameStats.currentRally),
+          currentRally: 0,
+        },
       }
 
     case "START_GAME":
@@ -93,6 +124,24 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         gameSettings: { ...state.gameSettings, ...action.settings },
+      }
+
+    case "INCREMENT_RALLY":
+      return {
+        ...state,
+        gameStats: {
+          ...state.gameStats,
+          currentRally: state.gameStats.currentRally + 1,
+        },
+      }
+
+    case "RESET_RALLY":
+      return {
+        ...state,
+        gameStats: {
+          ...state.gameStats,
+          currentRally: 0,
+        },
       }
 
     default:

@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@emotion/is-prop-valid": "latest",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
@@ -51,6 +52,8 @@
     "expo-asset": "latest",
     "expo-file-system": "latest",
     "expo-gl": "latest",
+    "framer-motion": "latest",
+    "gsap": "latest",
     "input-otp": "latest",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
