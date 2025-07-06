@@ -29,6 +29,12 @@ export default function GameUI() {
     })
   }
 
+  const handleServe = () => {
+    if (state.isServing && state.currentServer === "player") {
+      dispatch({ type: "SERVE_BALL" })
+    }
+  }
+
   return (
     <>
       {/* Animated Score Display */}
@@ -133,6 +139,25 @@ export default function GameUI() {
           </Link>
         </motion.div>
       </motion.div>
+
+      {/* Serve Button for Mobile/Click */}
+      <AnimatePresence>
+        {state.isServing && state.currentServer === "player" && (
+          <motion.div
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+          >
+            <Button
+              onClick={handleServe}
+              className="bg-green-600 hover:bg-green-700 text-white px-12 py-6 text-2xl font-bold shadow-2xl"
+            >
+              SERVE!
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Game Status Overlays */}
       <AnimatePresence>
@@ -241,11 +266,11 @@ export default function GameUI() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-blue-400 rounded flex items-center justify-center text-xs font-bold text-black">
+                <div className="w-4 h-4 bg-green-400 rounded flex items-center justify-center text-xs font-bold text-black">
                   ⎵
                 </div>
                 <span>
-                  <strong>Space</strong> - Serve ball
+                  <strong>Space/Enter/S</strong> - Serve ball
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -261,7 +286,7 @@ export default function GameUI() {
 
       {/* Server Indicator */}
       <AnimatePresence>
-        {state.gameStatus === "playing" && (
+        {(state.gameStatus === "serving" || state.gameStatus === "playing") && (
           <motion.div
             className="absolute bottom-6 right-6 z-10"
             initial={{ x: 100, opacity: 0 }}
@@ -275,7 +300,7 @@ export default function GameUI() {
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
                 >
-                  <div className="text-sm opacity-75 mb-1">Serving</div>
+                  <div className="text-sm opacity-75 mb-1">{state.isServing ? "Serving" : "Playing"}</div>
                   <div
                     className={`font-bold text-lg ${
                       state.currentServer === "player" ? "text-blue-400" : "text-red-400"
@@ -283,7 +308,7 @@ export default function GameUI() {
                   >
                     {state.currentServer === "player" ? "Your Turn" : "AI Turn"}
                   </div>
-                  {state.currentServer === "player" && (
+                  {state.isServing && state.currentServer === "player" && (
                     <motion.div
                       className="text-xs mt-2 opacity-75"
                       animate={{ opacity: [0.5, 1, 0.5] }}

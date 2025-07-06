@@ -5,15 +5,14 @@ import { useFrame } from "@react-three/fiber"
 import { RigidBody, type RapierRigidBody } from "@react-three/rapier"
 import { useGame } from "./GameContext"
 
-export default function RealisticBall() {
+export default function StylizedBall() {
   const ballRef = useRef<RapierRigidBody>(null)
   const { state, dispatch } = useGame()
 
-  // Reset ball position when serving
   useEffect(() => {
     if (ballRef.current && state.isServing) {
       const serveZ = state.currentServer === "player" ? 1.2 : -1.2
-      ballRef.current.setTranslation({ x: 0, y: 2.5, z: serveZ }, true)
+      ballRef.current.setTranslation({ x: 0, y: 1, z: serveZ }, true)
       ballRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
       ballRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true)
     }
@@ -25,29 +24,22 @@ export default function RealisticBall() {
     const position = ballRef.current.translation()
     const velocity = ballRef.current.linvel()
 
-    // Update ball position in game state
     dispatch({
       type: "UPDATE_BALL_POSITION",
       position: [position.x, position.y, position.z],
     })
 
-    // Only check for scoring if not serving
     if (!state.isServing && state.gameStatus === "playing") {
-      // Check for scoring - adjusted for larger table
-      if (position.z > 2.5) {
-        // AI scores
+      if (position.z > 2.2) {
         dispatch({ type: "SCORE_POINT", player: "ai" })
-      } else if (position.z < -2.5) {
-        // Player scores
+      } else if (position.z < -2.2) {
         dispatch({ type: "SCORE_POINT", player: "player" })
       }
 
-      // Ball out of bounds (sides or too low)
-      if (Math.abs(position.x) > 3.5 || position.y < 1.0) {
+      if (Math.abs(position.x) > 3.5 || position.y < -0.5) {
         dispatch({ type: "SET_SERVING", serving: true })
       }
 
-      // Add realistic air resistance
       if (Math.abs(velocity.x) > 0.1 || Math.abs(velocity.z) > 0.1) {
         const airResistance = 0.995
         ballRef.current.setLinvel(
@@ -59,17 +51,6 @@ export default function RealisticBall() {
           true,
         )
       }
-
-      // Spin decay
-      const angularVel = ballRef.current.angvel()
-      ballRef.current.setAngvel(
-        {
-          x: angularVel.x * 0.998,
-          y: angularVel.y * 0.998,
-          z: angularVel.z * 0.998,
-        },
-        true,
-      )
     }
   })
 
@@ -78,24 +59,15 @@ export default function RealisticBall() {
 
     const serveDirection = state.currentServer === "player" ? -1 : 1
     const serveVelocity = {
-      x: (Math.random() - 0.5) * 2.5,
-      y: 4.0,
-      z: serveDirection * 6,
-    }
-
-    // Add spin to serve
-    const spin = {
-      x: (Math.random() - 0.5) * 15,
-      y: (Math.random() - 0.5) * 8,
-      z: serveDirection * 12,
+      x: (Math.random() - 0.5) * 2,
+      y: 2,
+      z: serveDirection * 5,
     }
 
     ballRef.current.setLinvel(serveVelocity, true)
-    ballRef.current.setAngvel(spin, true)
     dispatch({ type: "SERVE_BALL" })
   }
 
-  // Auto-serve for AI
   useEffect(() => {
     if (state.isServing && state.currentServer === "ai") {
       const timer = setTimeout(handleServe, 1500)
@@ -103,7 +75,6 @@ export default function RealisticBall() {
     }
   }, [state.isServing, state.currentServer])
 
-  // Handle player serve with multiple keys
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (state.isServing && state.currentServer === "player") {
@@ -122,24 +93,15 @@ export default function RealisticBall() {
     <RigidBody
       ref={ballRef}
       colliders="ball"
-      restitution={0.85}
-      friction={0.4}
-      mass={0.0027}
-      linearDamping={0.05}
+      restitution={0.8}
+      friction={0.3}
+      mass={0.003}
+      linearDamping={0.1}
       angularDamping={0.1}
-      ccd={true}
     >
-      <mesh castShadow receiveShadow>
-        <sphereGeometry args={[0.04, 32, 32]} />
-        <meshPhysicalMaterial
-          color="#ffffff"
-          roughness={0.05}
-          metalness={0.0}
-          clearcoat={1.0}
-          clearcoatRoughness={0.05}
-          emissive="#ffffff"
-          emissiveIntensity={0.02}
-        />
+      <mesh castShadow>
+        <sphereGeometry args={[0.06, 16, 16]} />
+        <meshLambertMaterial color="#ffffff" />
       </mesh>
     </RigidBody>
   )

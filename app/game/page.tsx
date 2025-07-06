@@ -3,9 +3,8 @@
 import { Suspense } from "react"
 import { Canvas } from "@react-three/fiber"
 import { Physics } from "@react-three/rapier"
-import { Environment, OrbitControls, PerspectiveCamera } from "@react-three/drei"
-import { EffectComposer, Bloom, SSAO, FXAA } from "@react-three/postprocessing"
-import GameScene from "@/components/game/GameScene"
+import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
+import FixedGameScene from "@/components/game/FixedGameScene"
 import GameUI from "@/components/game/GameUI"
 import { GameProvider } from "@/components/game/GameContext"
 import LoadingScreen from "@/components/game/LoadingScreen"
@@ -13,45 +12,59 @@ import LoadingScreen from "@/components/game/LoadingScreen"
 export default function GamePage() {
   return (
     <GameProvider>
-      <div className="w-full h-screen relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-700 to-slate-800">
+      <div className="w-full h-screen relative overflow-hidden">
+        {/* Blue cloudy background like the reference image */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600">
+          {/* Cloud effects */}
+          <div className="absolute inset-0 opacity-40">
+            <div className="absolute top-10 left-10 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse"></div>
+            <div
+              className="absolute top-32 right-20 w-60 h-60 bg-white rounded-full blur-3xl animate-pulse"
+              style={{ animationDelay: "1s" }}
+            ></div>
+            <div
+              className="absolute bottom-20 left-1/3 w-48 h-48 bg-white rounded-full blur-3xl animate-pulse"
+              style={{ animationDelay: "2s" }}
+            ></div>
+            <div
+              className="absolute top-1/2 right-10 w-32 h-32 bg-white rounded-full blur-2xl animate-pulse"
+              style={{ animationDelay: "0.5s" }}
+            ></div>
+            <div
+              className="absolute bottom-10 right-1/3 w-36 h-36 bg-white rounded-full blur-2xl animate-pulse"
+              style={{ animationDelay: "1.5s" }}
+            ></div>
+          </div>
+        </div>
+
         <Suspense fallback={<LoadingScreen />}>
           <Canvas
-            shadows="soft"
+            shadows
             gl={{
               antialias: true,
               alpha: false,
               powerPreference: "high-performance",
-              toneMapping: 2, // ACESFilmicToneMapping
-              toneMappingExposure: 1.0,
             }}
             dpr={[1, 2]}
           >
-            <PerspectiveCamera makeDefault position={[0, 18, 25]} fov={45} near={0.1} far={1000} />
+            <PerspectiveCamera makeDefault position={[0, 8, 6]} fov={60} near={0.1} far={1000} />
 
             <OrbitControls
               enablePan={false}
-              enableZoom
-              enableRotate
-              minDistance={15}
-              maxDistance={35}
+              enableZoom={true}
+              enableRotate={true}
+              minDistance={6}
+              maxDistance={15}
               minPolarAngle={Math.PI / 8}
-              maxPolarAngle={Math.PI / 2.2}
-              target={[0, 1.5, 0]}
+              maxPolarAngle={Math.PI / 2}
+              target={[0, 0, 0]}
               enableDamping
               dampingFactor={0.05}
             />
 
-            <Physics gravity={[0, -9.81, 0]} timeStep={1 / 60} paused={false}>
-              <GameScene />
+            <Physics gravity={[0, -9.81, 0]} timeStep={1 / 60}>
+              <FixedGameScene />
             </Physics>
-
-            <Environment preset="warehouse" background={false} environmentIntensity={0.6} />
-
-            <EffectComposer enableNormalPass multisampling={4}>
-              <SSAO intensity={0.5} radius={0.3} bias={0.01} samples={32} rings={4} />
-              <Bloom intensity={0.2} luminanceThreshold={0.9} luminanceSmoothing={0.9} mipmapBlur />
-              <FXAA />
-            </EffectComposer>
           </Canvas>
         </Suspense>
 

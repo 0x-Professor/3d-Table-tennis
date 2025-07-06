@@ -1,12 +1,12 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useReducer, type ReactNode } from "react"
+import { createContext, useContext, useReducer, useEffect, type ReactNode } from "react"
 
 interface GameState {
   playerScore: number
   aiScore: number
-  gameStatus: "menu" | "playing" | "paused" | "gameOver"
+  gameStatus: "menu" | "playing" | "paused" | "gameOver" | "serving"
   currentServer: "player" | "ai"
   ballPosition: [number, number, number]
   playerPaddlePosition: [number, number, number]
@@ -22,6 +22,7 @@ interface GameState {
     longestRally: number
     currentRally: number
   }
+  isServing: boolean
 }
 
 type GameAction =
@@ -37,13 +38,15 @@ type GameAction =
   | { type: "UPDATE_SETTINGS"; settings: Partial<GameState["gameSettings"]> }
   | { type: "INCREMENT_RALLY" }
   | { type: "RESET_RALLY" }
+  | { type: "SET_SERVING"; serving: boolean }
+  | { type: "SERVE_BALL" }
 
 const initialState: GameState = {
   playerScore: 0,
   aiScore: 0,
-  gameStatus: "playing", // Auto-start the game
+  gameStatus: "serving", // Start in serving state
   currentServer: "player",
-  ballPosition: [0, 2.5, 0],
+  ballPosition: [0, 2.5, 1.2],
   playerPaddlePosition: [0, 1.8, 1.6],
   aiPaddlePosition: [0, 1.8, -1.6],
   gameSettings: {
@@ -57,6 +60,7 @@ const initialState: GameState = {
     longestRally: 0,
     currentRally: 0,
   },
+  isServing: true,
 }
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -81,9 +85,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         playerScore: newPlayerScore,
         aiScore: newAiScore,
-        gameStatus: gameOver ? "gameOver" : "playing",
+        gameStatus: gameOver ? "gameOver" : "serving",
         currentServer: nextServer,
         lastPointWinner: action.player,
+        isServing: true,
         gameStats: {
           ...state.gameStats,
           rallies: state.gameStats.rallies + 1,
@@ -93,19 +98,20 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       }
 
     case "START_GAME":
-      return { ...state, gameStatus: "playing" }
+      return { ...state, gameStatus: "serving", isServing: true }
 
     case "PAUSE_GAME":
       return { ...state, gameStatus: "paused" }
 
     case "RESUME_GAME":
-      return { ...state, gameStatus: "playing" }
+      return { ...state, gameStatus: state.isServing ? "serving" : "playing" }
 
     case "RESET_GAME":
       return {
         ...initialState,
         gameSettings: state.gameSettings,
-        gameStatus: "playing",
+        gameStatus: "serving",
+        isServing: true,
       }
 
     case "UPDATE_BALL_POSITION":
@@ -144,6 +150,20 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         },
       }
 
+    case "SET_SERVING":
+      return {
+        ...state,
+        isServing: action.serving,
+        gameStatus: action.serving ? "serving" : "playing",
+      }
+
+    case "SERVE_BALL":
+      return {
+        ...state,
+        gameStatus: "playing",
+        isServing: false,
+      }
+
     default:
       return state
   }
@@ -156,6 +176,11 @@ const GameContext = createContext<{
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, initialState)
+
+  // Auto-start the game
+  useEffect(() => {
+    dispatch({ type: "START_GAME" })
+  }, [])
 
   return <GameContext.Provider value={{ state, dispatch }}>{children}</GameContext.Provider>
 }
